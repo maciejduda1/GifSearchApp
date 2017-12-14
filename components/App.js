@@ -18,43 +18,43 @@
             });
         }.bind(this));
     },
-/*
-Algorytm postępowania dla tej metody jest następujący:
 
-1. pobierz na wejściu wpisywany tekst,
-2. zasygnalizuj, że zaczął się proces ładowania,
-3. Rozpocznij pobieranie gifa,
-4. Na zakończenie pobierania:
-    a. przestań sygnalizować ładowanie,
-    b. ustaw nowego gifa z wyniku pobierania,
-    c. ustaw nowy stan dla wyszukiwanego tekstu.
-*/
-    getGif: function(searchingText, callback) {  // 1.
+    getGif: function (searchingText, callback){
         var GIPHY_PUB_KEY = 'K46YHN7qqvn25z8YPHX6Za4NytsHqR36';
-        var url = 'http://api.giphy.com/v1/gifs/random?api_key=' + GIPHY_PUB_KEY + '&tag=' + searchingText;  // 2.
-        var xhr = new XMLHttpRequest();  // 3.
-        xhr.open('GET', url);
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                var data = JSON.parse(xhr.responseText).data; // 4.
-                var gif = {  // 5.
-                    url: data.fixed_width_downsampled_url,
-                    sourceUrl: data.url
+        var url = 'http://api.giphy.com/v1/gifs/random?api_key=' + GIPHY_PUB_KEY + '&tag=' + searchingText;
+        function makePromise(url){
+            return new Promise (
+                function(resolve, reject){
+                const request = new XMLHttpRequest();
+                request.onload = function(){
+                    if (this.status === 200){
+                        //console.log(this);
+                       resolve(this.response);
+                    } else {
+                        reject(new Error(this.statusText));
+                    }
                 };
-                callback(gif);  // 6.
+                request.onerror = function(){
+                    reject(new Error(
+                        `XMLHttpRequest Error: ${this.statusText} `));
+                };
+                request.open('GET', url);
+                request.send();
             }
+        );
+    } 
+    makePromise(url)
+    .then(response => {
+       // console.log(response);
+        var data = JSON.parse(response.responseText).data; // 4.
+        var gif = {  // 5.
+            url: data.fixed_width_downsampled_url,
+            sourceUrl: data.url
         };
-        xhr.send();
-    },
-
-/*Tak jak w poprzednim podpunkcie, rozpiszę algorytm postępowania w punktach, zgodnie z odpowiadającymi im komentarzami w kodzie:
-
-1. Na wejście metody getGif przyjmujemy dwa parametry: wpisywany tekst (searchingText) i funkcję, która ma się wykonać po pobraniu gifa (callback)
-2. Konstruujemy adres URL dla API Giphy (pełną dokumentację znajdziesz pod tym adresem)
-3. Wywołujemy całą sekwencję tworzenia zapytania XHR do serwera i wysyłamy je.
-4. W obiekcie odpowiedzi mamy obiekt z danymi. W tym miejscu rozpakowujemy je sobie do zmiennej data, aby nie pisać za każdym razem response.data.
-5. Układamy obiekt gif na podstawie tego co otrzymaliśmy z serwera
-6. Przekazujemy obiekt do funkcji callback, którą przekazaliśmy jako drugi parametr metody getGif.*/ 
+        callback(gif);  // 6.
+    })
+   // .catch(error => console.error('Something went wrong', error));
+},
     
     render: function() {
 
