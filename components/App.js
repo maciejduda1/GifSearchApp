@@ -6,56 +6,55 @@
         gif: {}
         };
     },
-    handleSearch: function(searchingText) {  // 1.
+    handleSearch: function(searchingText) {  
         this.setState({
-        loading: true  // 2.
+            loading: true  
         });
-        this.getGif(searchingText, function(gif) {  // 3.
-            this.setState({  // 4
-            loading: false,  // a
-            gif: gif,  // b
-            searchingText: searchingText  // c
-            });
-        }.bind(this));
+        this.getGif(searchingText)
+            .then(response => {         //zaczeka na response!
+                console.log(JSON.parse(response));
+                return JSON.parse(response); // parsedResponse 
+
+            })
+            .then(parsedResponse => {
+                var data = parsedResponse.data;
+                var gif = {
+                    url: data.fixed_width_downsampled_url,
+                    sourceUrl: data.url
+                };
+                this.setState({  
+                    loading: false,  
+                    gif: gif,  
+                    searchingText: searchingText  
+                });
+            })
+            .catch(() => {
+                console.log('Error');
+            })    
     },
 
-    getGif: function (searchingText, callback){
+    getGif: function (searchingText){
         var GIPHY_PUB_KEY = 'K46YHN7qqvn25z8YPHX6Za4NytsHqR36';
         var url = 'http://api.giphy.com/v1/gifs/random?api_key=' + GIPHY_PUB_KEY + '&tag=' + searchingText;
-        function makePromise(url){
-            return new Promise (
-                function(resolve, reject){
+        return new Promise(                                              // Ta funkcja zwraca odpowiedź z servera ale po jej otrzymaniu!
+            function(resolve, reject){
                 const request = new XMLHttpRequest();
                 request.onload = function(){
                     if (this.status === 200){
-                        //console.log(this);
-                       resolve(this.response);
+                        resolve(this.response);
                     } else {
                         reject(new Error(this.statusText));
                     }
                 };
                 request.onerror = function(){
-                    reject(new Error(
-                        `XMLHttpRequest Error: ${this.statusText} `));
+                    reject(new Error(this.statusText));
                 };
                 request.open('GET', url);
                 request.send();
             }
         );
-    } 
-    makePromise(url)
-    .then(response => {
-       // console.log(response);
-        var data = JSON.parse(response.responseText).data; // 4.
-        var gif = {  // 5.
-            url: data.fixed_width_downsampled_url,
-            sourceUrl: data.url
-        };
-        callback(gif);  // 6.
-    })
-   // .catch(error => console.error('Something went wrong', error));
-},
-    
+    },
+
     render: function() {
 
         var styles = {
